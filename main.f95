@@ -41,22 +41,22 @@ program sistema_solar
 	G = 6.67E-11 		! m^3* kg^-1* s^-2 
 	Ms = 1.99E30 		! kg
 
-	f_r = c 					! m
-	f_t = 5022361.106 			! s
-	f_v = 29786.7869			! m/s
+	f_r = 6.684491979E-12 					! 		1/c 			! m
+	f_t = 1.991095381E-7					! (G*Ms/c**3)**(1/2)	! s
+	f_v = 3.357193253E-5					! f_r/f_t				! m/s
 
 	t=0
 	h=0.001
 
 
-	open(10, file='Datos/README.txt', status='unknown')
+	open(10, file='Datos/INFO_Simul.txt', status='unknown')
 		write(10,*) "Datos simulacion formacion S.Solar - Fortran95"
 		write(10,*) "h = 		", h, "		Intervalo de tiempo (~h*58 dias)"
 		write(10,*) "i = 		", iter, "		Numero de iteraciones"
 
 	open(1, file='Datos/Rock.txt', status='unknown')
 	open(2, file='Datos/Gas.txt', status='unknown')
-	open(4, file='Datos/Constantes.txt', status='unknown')
+	open(3, file='Datos/Constantes.txt', status='unknown')
 
 	do i = 1, iter
 
@@ -82,28 +82,51 @@ program sistema_solar
 
 	close(1)
 	close(2)
-	close(4)
+	close(3)
 	
 end program sistema_solar
 
 
-subroutine condiciones_iniciales(rock_x, rock_y, rock_vx, rock_vy, rock_m, gas_x, gas_y, gas_vx, gas_vy, gas_m, f_r, f_v, n)
+
+
+!
+! 	Subrutina que establece las condiciones iniciales de posicion y velocidad
+!	
+! 		n: numero de planetoides
+!		aux: Tipo de planetoide (0 --> rocoso, 1 --> gaseoso)
+!
+
+subroutine condiciones_iniciales(x, y, vx, vy, f_v, n)
 	implicit none
 
-	integer :: n
-	double precision,intent(inout) :: rock_x(1:n), rock_y(1:n), rock_vx(1:n), rock_vy(1:n), rock_m(1:n),  gas_x(1:n), gas_y(1:n), gas_vx(1:n), gas_vy(1:n), gas_m(1:n)
-	double precision, intent(in) :: f_r, f_v
-
+	integer, intent (in) :: n
+	double precision, intent(out) :: f_v  
+	double precision,intent(inout) :: x(1:n), y(1:n), vx(1:n), vy(1:n)
+	
 	integer :: i
 
-	
+	call random_seed()
+	call random_number(x)
+	call random_number(vy)
+
+	x = 80*x + 30 			! 30 < x < 110  Unidades Astronomicas
+	y = 0 					! Parten del eje x 
+
+	vx = 0 					! Al partir del eje x --> vx = 0 
+	vy = (30 + 30*vy)*f_v 	! 30 < vy < 60 		Luego lo reescalo con f_v
+
+	do i = 1, n
+		if (mod(i,2) == 0) then 
+			vy(i) = -vy(i)		! Quiero que algunos giren en sentido opuesto
+		end if 
+	end do
 
 end subroutine condiciones_iniciales
 
-subroutine aceleraciones(x, y, m, ax, ay)
+subroutine aceleraciones(x, y, m, ax, ay, n)
 	implicit none
 
-	integer, parameter :: n = 10
+	integer :: n
 	double precision, intent(in) :: x(1:n), y(1:n), m(1:n)
 	double precision, intent(out) :: ax(1:n), ay(1:n)
 

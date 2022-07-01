@@ -1,0 +1,3 @@
+ Datos simulacion formacion S.Solar - Fortran95
+ h = 		   1.0000000474974513E-003 		Intervalo de tiempo (~h*58 dias)
+ i = 		       10000 		Numero de iteraciones

@@ -1,0 +1,8 @@
+# Reused code file (from SSolar project)
+main.f95
+
+# Test files
+test.f95
+
+# App files (.exe)
+*.exe 
