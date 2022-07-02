@@ -1,12 +1,12 @@
-set terminal gif animate delay 10
-set output "Gifs/rocoso.gif"  
+set terminal gif animate delay 3
+set output "Gifs/Rocoso3.gif"  
 
 rock = 'Datos/Rock.dat'
 
-set xrange[-100:120]
-set yrange[-50:50]
+set xrange[-120:120]
+set yrange[-120:120]
 
-do for [bb = 0:200]{
+do for [bb = 0:1000]{
 	set title sprintf('Frame:%03.0f',bb)
-	plot rock every ::::bb u 2:3
+	plot rock u 2:3 index bb 
 }

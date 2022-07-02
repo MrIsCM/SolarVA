@@ -14,7 +14,7 @@ program planetesimales
 	!----------------------------------------------------------
 	
 	! Cantidad de planetesimales iniciales
-	integer, parameter :: rock_n = 10
+	integer, parameter :: rock_n = 100
 
 	
 	! Masa, posicion, velocidad, acelerock_acion, funcion aux w, 
@@ -69,7 +69,7 @@ program planetesimales
 	f_v = 3.357193253E-5					! f_r/f_t				! m/s
 
 	t=0
-	h=0.01
+	h=0.005
 
 	open(10, file='Datos/INFO_Simul.txt', status='unknown')
 		write(10,*) "Datos simulacion formacion S.Solar - Fortran95"
@@ -82,8 +82,8 @@ program planetesimales
 
 
 
-	call condiciones_iniciales(rock_x, rock_y, rock_vx, rock_vy, f_v, rock_n)
-	call condiciones_iniciales(gas_x, gas_y, gas_vx, gas_vy, f_v, gas_n)
+	call condiciones_iniciales(rock_m, rock_x, rock_y, rock_vx, rock_vy, f_v, rock_n)
+	call condiciones_iniciales(gas_m, gas_x, gas_y, gas_vx, gas_vy, f_v, gas_n)
 
 	call aceleraciones(rock_x, rock_y, rock_m, rock_ax, rock_ay, rock_n)
 
@@ -93,7 +93,7 @@ program planetesimales
 		call vervelet_vel(rock_vx, rock_vy, rock_ax, rock_ay, rock_wx, rock_wy, rock_n, h)
 		call aceleraciones(rock_x, rock_y, rock_m, rock_ax, rock_ay, rock_n)
 
-		if (mod(i,5*100)==0) then
+		if (mod(i,100)==0) then
 			do j = 1, rock_n
 				write(1,*) t, rock_x(j), rock_y(j)
 			end do
@@ -117,31 +117,54 @@ program planetesimales
 end program planetesimales
 
 
-subroutine condiciones_iniciales(x, y, vx, vy, f_v, n)
+subroutine condiciones_iniciales(m, x, y, vx, vy, f_v, n)
 	implicit none
 
 	integer, intent (in) :: n
-	double precision, intent(out) :: f_v  
-	double precision,intent(inout) :: x(1:n), y(1:n), vx(1:n), vy(1:n)
+	double precision, intent(in) :: f_v  
+	double precision,intent(inout) :: x(1:n), y(1:n), vx(1:n), vy(1:n), m(1:n)
 	
 	integer :: i
+	double precision :: aux1(1:n), aux2(1:n), v(1:n), alpha 
+
+
+	!-----------------------------------------
+	! 		POSICIONES Y VELOCIDADES
+	!-----------------------------------------
 
 	call random_seed()
 	call random_number(x)
+	call random_number(y)
+	call random_number(aux1)
+	call random_number(aux2)
 	! call random_number(vx)
-	call random_number(vy)
 
-	x = 80*x + 30 			! 30 < x < 110  Unidades Astronomicas
-	y = 0 					! Parten del eje x 
+	x = 80*x + 20 			! 20 < x < 100  Unidades Astronomicas
+	y = 160*y- 80			! -80 < y < 80  Unidades Astronomicas
 
-	! vx = vx*1.1*f_v				! Al partir del eje x considero velocidades muy pequeñas 
-	vy = (50 + 100*vy)*f_v	 	! 30 < vy < 60 		Luego lo reescalo con f_v
+	do i = 1, n
+		v(i) = 1/(x(i)**2 + y(i)**2)**0.25 		! La raiz de la norma -- RAIZ((x^2+y^2)^1/2)
+		alpha = atan(y(i)/x(i))
+		vx(i) = v(i) * sin(alpha)
+		if ( alpha > 0 ) then 
+			vy(i) = -v(i) * cos(alpha)*(0.2*aux1(i) + 0.9)
+		else
+			vy(i) = v(i) * cos(alpha)*(0.2*aux2(i) + 0.9)
+		end if 
+	end do
 
 	! do i = 1, n
 	! 	if (mod(i,4) == 0) then 
 	! 		vy(i) = -vy(i)		! Quiero que algunos giren en sentido opuesto
 	! 	end if 
 	! end do
+
+
+	!------------------------
+	!		MASAS
+	!------------------------
+
+	m = 2.5E-10
 
 
 end subroutine condiciones_iniciales
