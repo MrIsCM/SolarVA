@@ -28,7 +28,7 @@ program planetesimales
 	!----------------------------------------------------------
 
 	! Cantidad de planetesimales iniciales Tipo: Gas
-	integer, parameter :: gas_n = 500
+	integer, parameter :: gas_n = 900
 
 	! Masa, posicion, velocidad, aceleracion, funcion aux w, 
 	double precision :: gas_m(1:gas_n), gas_r(1:gas_n), gas_x(1:gas_n), gas_y(1:gas_n), gas_vx(1:gas_n), gas_vy(1:gas_n)
@@ -54,7 +54,7 @@ program planetesimales
 
 	! Parametro iterativo
 	integer :: i, j
-	integer, parameter :: iter = 2*1000000
+	integer, parameter :: iter = 4*1000000
 
 
 

@@ -1,4 +1,4 @@
-set terminal gif animate delay 3
+set terminal gif animate delay 5
 set output "Gifs/R100G500.gif"  
 
 rock = 'Datos/Rock.dat'
