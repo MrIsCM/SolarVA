@@ -54,7 +54,7 @@ program planetesimales
 
 	! Parametro iterativo
 	integer :: i, j
-	integer, parameter :: iter = 4*1000000
+	integer, parameter :: iter = 8*1000000
 
 
 
@@ -121,15 +121,15 @@ program planetesimales
 		call vervelet_vel(gas_m, gas_vx, gas_vy, gas_ax, gas_ay, gas_wx, gas_wy, gas_n, h)
 		call aceleraciones(gas_x, gas_y, gas_m, gas_ax, gas_ay, gas_n)
 
-		if (mod(i,2000)==0) then
+		if (mod(i,3000)==0) then
 			do j = 1, rock_n
 				if (rock_m(j) /= 0) then
-					write(1,*) t, rock_x(j), rock_y(j), rock_m(j)
+					write(1,*) t, rock_x(j), rock_y(j), rock_m(j), rock_r(j)
 				end if 
 			end do
 			do j = 1, gas_n
 				if (gas_m(j) /= 0) then
-					write(2,*) t, gas_x(j), gas_y(j), gas_m(j)
+					write(2,*) t, gas_x(j), gas_y(j), gas_m(j), gas_r(j)
 				end if 
 			end do
 			write(1,*) 
