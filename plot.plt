@@ -13,6 +13,6 @@ stats gas nooutput
 
 do for [bb = 0:int(STATS_blocks)-2]{
 	set title sprintf('Frame:%03.0f',bb)
-	plot gas u 2:3 index bb pt 7 title 'Masas Gaseosa',\
-		rock u 2:3 index bb pt 2 title 'Masas Rocosas'
+	plot gas u 2:3 index bb pt 1 lc 2 title 'Masas Gaseosa',\
+		rock u 2:3 index bb pt 7 lc 7 title 'Masas Rocosas'
 }

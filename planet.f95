@@ -584,3 +584,19 @@ subroutine Ener_mec(x, y, vx, vy, m, E_mec, n)
 
 	
 end subroutine Ener_mec
+
+
+subroutine momento_angular(n, x, y, vx, vy, m, L)
+	implicit none
+	double precision,intent(in) :: x(1:n), y(1:n), vx(1:n), vy(1:n), m(1:n)
+	double precision,intent(out) ::  L
+
+	integer, intent(in) :: n
+	integer :: i
+	L = 0
+
+	do i = 1, n
+		L = L + x(i)*m(i)*vy(i) - y(i)*m(i)*vx(i)
+	end do
+
+end subroutine momento_angular
