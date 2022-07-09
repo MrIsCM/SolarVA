@@ -20,7 +20,7 @@ program planetesimales
 	! Masa, posicion, velocidad, acelerock_acion, funcion aux w, 
 	double precision :: rock_m(1:rock_n), rock_r(1:rock_n), rock_x(1:rock_n), rock_y(1:rock_n), rock_vx(1:rock_n)
 	double precision ::  rock_vy(1:rock_n), rock_ax(1:rock_n), rock_ay(1:rock_n), rock_wx(1:rock_n), rock_wy(1:rock_n)
-	double precision :: rock_Emec, rock_ESun, rock_Qcol, rock_Et
+	double precision :: rock_Emec, rock_ESun, rock_Qcol, rock_Et, rock_LSun, Rock_L 
 
 
 	!----------------------------------------------------------
@@ -33,7 +33,7 @@ program planetesimales
 	! Masa, posicion, velocidad, aceleracion, funcion aux w, 
 	double precision :: gas_m(1:gas_n), gas_r(1:gas_n), gas_x(1:gas_n), gas_y(1:gas_n), gas_vx(1:gas_n), gas_vy(1:gas_n)
 	double precision ::  gas_ax(1:gas_n), gas_ay(1:gas_n), gas_wx(1:gas_n), gas_wy(1:gas_n)
-	double precision :: gas_Emec, gas_ESun, gas_Qcol, gas_Et 
+	double precision :: gas_Emec, gas_ESun, gas_Qcol, gas_Et, gas_LSun, gas_L 
 
 
 	!----------------------------------------------------------
@@ -54,7 +54,7 @@ program planetesimales
 
 	! Parametro iterativo
 	integer :: i, j
-	integer, parameter :: iter = 8*1000000
+	integer, parameter :: iter = 3*1000000
 
 
 
@@ -72,14 +72,14 @@ program planetesimales
 	t=0
 	h=0.007
 
-	open(10, file='Datos/INFO_Simul.txt', status='unknown')
+	open(10, file='Datos2/INFO_Simul.txt', status='unknown')
 		write(10,*) "Datos simulacion formacion S.Solar - Fortran95"
 		write(10,*) "h = 		", h, "		Intervalo de tiempo (~h*58 dias)"
 		write(10,*) "i = 		", iter, "		Numero de iteraciones"
 
-	open(1, file='Datos/Rock.dat', status='unknown')
-	open(2, file='Datos/Gas.dat', status='unknown')
-	open(3, file='Datos/Constantes.dat', status='unknown')
+	open(1, file='Datos2/Rock.dat', status='unknown')
+	open(2, file='Datos2/Gas.dat', status='unknown')
+	open(3, file='Datos2/Constantes.dat', status='unknown')
 
 
 
@@ -93,6 +93,13 @@ program planetesimales
 	! Energia 'destruida' al dejar de considerar las masas que se acercan demasiado a Sol
 	rock_ESun = 0 
 	rock_Qcol = 0
+	rock_LSun = 0
+
+	gas_ESun = 0
+	gas_Qcol = 0
+	gas_LSun = 0
+
+
 
 	do i = 0, iter
 
@@ -103,10 +110,10 @@ program planetesimales
 		call colision_gas(gas_r, gas_x, gas_y, gas_vx, gas_vy, gas_m, gas_Qcol, gas_n)
 
 		! 'Eliminacion' de masas por distancia al Sol  (ROCOSO)
-		call SunDist(rock_m, rock_x, rock_y, rock_vx, rock_vy, rock_ESun, rock_n)
+		call SunDist(rock_m, rock_x, rock_y, rock_vx, rock_vy, rock_ESun, rock_LSun, rock_n)
 
 		! 'Eliminacion' de masas por distancia al Sol (GASEOSO)
-		call SunDist(gas_m, gas_x, gas_y, gas_vx, gas_vy, gas_ESun, gas_n)
+		call SunDist(gas_m, gas_x, gas_y, gas_vx, gas_vy, gas_ESun, gas_LSun, gas_n)
 
 
 		! Algoritmo de Vervelet - Calculo de la posicion en t+h - Masas ROCOSAS
@@ -137,12 +144,21 @@ program planetesimales
 			write(2,*) 
 			write(2,*)
 
+			! Calculo de la energia mecanica de las masas /= 0 
 			call Ener_mec(rock_x, rock_y, rock_vx, rock_vy, rock_m, rock_Emec, rock_n)
 			call Ener_mec(gas_x, gas_y, gas_vx, gas_vy, gas_m, gas_Emec, gas_n)
+
+			! Energia total, sumando la 'perdida' en colisiones y la de eliminacion por distancia al Sol
 			rock_Et = rock_Emec + rock_ESun + rock_Qcol
 			gas_Et = gas_Emec + gas_ESun + gas_Qcol
 
-			write(3,*) t, rock_Et + gas_Et, rock_Et, gas_Et
+
+			! Calculo del momento angular total (de las masas /= 0 )
+			call momento_angular(rock_n, rock_x, rock_y, rock_vx, rock_vy, rock_m, rock_L)
+			call momento_angular(gas_n, gas_x, gas_y, gas_vx, gas_vy, gas_m, gas_L)
+
+			! Escribo Emec total + 'perdidas' y el momento angular total + 'perdidas'
+			write(3,*) t, rock_Et + gas_Et, rock_L + rock_LSun + gas_L + gas_LSun
 		end if 
 
 		t = t+h
@@ -349,10 +365,10 @@ subroutine aceleraciones(x, y, m, ax, ay, n)
 	ay = 0
 	
 	do i = 1, n
-		if (m(i) /= 0) then
+		if (m(i)/=0) then 
 			ax(i) = ax(i) - (x(i))/(x(i)**2 + y(i)**2)**(3.0/2.0)
 			ay(i) = ay(i) - (y(i))/(x(i)**2 + y(i)**2)**(3.0/2.0)
-		end if 
+		end if
 	end do
 
 end subroutine aceleraciones
@@ -368,10 +384,10 @@ subroutine vervelet_pos(m, x, y, vx, vy, ax, ay, n, h)
 	integer :: i
 
 	do i = 1, n
-		if (m(i) /= 0) then	
+		if (m(i)/=0) then
 			x(i) = x(i) + h*vx(i) + 0.5*h**2*ax(i)
 			y(i) = y(i) + h*vy(i) + 0.5*h**2*ay(i)
-		end if	
+		end if
 	end do
 
 end subroutine vervelet_pos
@@ -387,11 +403,11 @@ subroutine w(m, vx, vy, ax, ay, wx, wy, n, h)
 	integer :: i
 	
 	do i = 1, n
-		if (m(i) /= 0) then
+		if (m(i)/=0) then
 			wx(i) = vx(i) + 0.5*h*ax(i)
 			wy(i) = vy(i) + 0.5*h*ay(i)
 		end if
-		end do
+	end do
 end subroutine w
 
 
@@ -405,7 +421,7 @@ subroutine vervelet_vel(m, vx, vy, ax, ay, wx, wy, n, h)
 	integer :: i 
 
 	do i = 1, n
-		if (m(i) /= 0) then
+		if (m(i)/=0) then
 			vx(i) = wx(i) + 0.5*h*ax(i)
 			vy(i) = wy(i) + 0.5*h*ay(i) 
 		end if
@@ -414,28 +430,33 @@ subroutine vervelet_vel(m, vx, vy, ax, ay, wx, wy, n, h)
 end subroutine vervelet_vel
 
 
-subroutine SunDist(m, x, y, vx, vy, ESun, n)
+subroutine SunDist(m, x, y, vx, vy, ESun, LSun, n)
 	implicit none
 	integer, intent(in) :: n 
 	double precision, intent(in) :: x(1:n), y(1:n) 
-	double precision, intent(inout) :: m(1:n), vx(1:n), vy(1:n), ESun 
+	double precision, intent(inout) :: m(1:n), vx(1:n), vy(1:n), ESun, LSun 
 
 	integer :: i 
 	real, parameter :: R_Sol2 = 2.162687122E-5 	! U.Astro 
 
 	do i = 1, n
-		! Si se acerca demasiado al Sol o se aleja demasiado
-		if (((x(i)**2 + y(i)**2) <=  R_Sol2) .or. (x(i)**2 + y(i)**2) >= 80**2) then
+		if (m(i)/=0) then
+			! Si se acerca demasiado al Sol o se aleja demasiado
+			if (((x(i)**2 + y(i)**2) <=  R_Sol2) .or. (x(i)**2 + y(i)**2) >= 120**2) then
 
-			! Calculo la E.Mec que tiene para tenerla en cuenta en la conserv. de la Energia
-			ESun = Esun + 0.5*m(i)*(vx(i)**2 + vy(i)**2) - m(i)/(x(i)**2+y(i)**2)**0.5
+				! Calculo la E.Mec que tiene para tenerla en cuenta en la conserv. de la Energia
+				ESun = Esun + 0.5*m(i)*(vx(i)**2 + vy(i)**2) - m(i)/(x(i)**2+y(i)**2)**0.5
 
-			! 'Elimino' la masa. Comporbar siempre que m/=0
-			vx(i) = 0
-			vy(i) = 0
-			m(i) = 0
+				! 'Perdida' de momento angular por 'eliminacion' de la masa
+				LSun = LSun + x(i)*m(i)*vy(i) - y(i)*m(i)*vx(i)
 
-		end if 
+				! 'Elimino' la masa. Comporbar siempre que m/=0
+				vx(i) = 0
+				vy(i) = 0
+				m(i) = 0
+
+			end if 
+		end if
 	end do
 
 	
@@ -465,7 +486,7 @@ subroutine colision_rock(r, x, y, vx, vy, m, Qcol, n)
 	do i = 1, n
 		if (m(i) /= 0) then 
 			do j = i+1, n
-				if ( ((x(i)-x(j))**2 + (y(i)-y(j))**2) <= 6*(r(i)+r(j))  ) then
+				if ( ((x(i)-x(j))**2 + (y(i)-y(j))**2) <= 5*(r(i)+r(j))  ) then
 					write(*,*) "Colision  producida"
 
 					! Energia disipada en la colision 
@@ -513,7 +534,7 @@ subroutine colision_gas(r, x, y, vx, vy, m, Qcol, n)
 	integer :: i, j
 
 	do i = 1, n
-		if ((m(i) /= 0) .and. (x(i)**2+y(i)**2) >= 4**2) then 
+		if ((m(i) /= 0) .and. (x(i)**2+y(i)**2) >= 3**2) then 
 			do j = i+1, n
 				if ( ((x(i)-x(j))**2 + (y(i)-y(j))**2) <= 2*(r(i)+r(j))  ) then
 					write(*,*) "Colision  producida"
@@ -588,15 +609,19 @@ end subroutine Ener_mec
 
 subroutine momento_angular(n, x, y, vx, vy, m, L)
 	implicit none
+
+	integer, intent(in) :: n
 	double precision,intent(in) :: x(1:n), y(1:n), vx(1:n), vy(1:n), m(1:n)
 	double precision,intent(out) ::  L
 
-	integer, intent(in) :: n
 	integer :: i
+
 	L = 0
 
 	do i = 1, n
-		L = L + x(i)*m(i)*vy(i) - y(i)*m(i)*vx(i)
+		if (m(i)/=0) then
+			L = L + x(i)*m(i)*vy(i) - y(i)*m(i)*vx(i)
+		end if
 	end do
 
 end subroutine momento_angular
