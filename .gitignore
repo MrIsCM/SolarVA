@@ -3,6 +3,8 @@ main.f95
 
 # Test files
 test.f95
+timetest.dat
+timebyprob.png
 
 # App files (.exe)
 *.exe 
